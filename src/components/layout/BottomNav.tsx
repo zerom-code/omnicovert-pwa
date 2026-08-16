@@ -27,21 +27,19 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
   return (
     <nav
       style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        background: 'rgba(8, 10, 16, 0.96)',
+        flexShrink: 0,
+        width: '100%',
+        background: 'rgba(8, 10, 16, 0.98)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         borderTop: '1px solid var(--border-subtle)',
         display: 'flex',
         justifyContent: 'space-around',
         alignItems: 'center',
-        paddingTop: '4px',
-        paddingLeft: '2px',
-        paddingRight: '2px',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        paddingTop: '6px',
+        paddingLeft: '4px',
+        paddingRight: '4px',
+        paddingBottom: 'max(4px, env(safe-area-inset-bottom, 4px))',
         zIndex: 50,
       }}
     >
@@ -55,7 +53,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '1px',
+              gap: '2px',
               background: 'transparent',
               border: 'none',
               color: isActive ? 'var(--primary-light)' : 'var(--text-muted)',
@@ -72,8 +70,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
               <div
                 style={{
                   position: 'absolute',
-                  top: '-4px',
-                  width: '14px',
+                  top: '-6px',
+                  width: '16px',
                   height: '2px',
                   borderRadius: '9999px',
                   background: 'var(--primary-gradient)',

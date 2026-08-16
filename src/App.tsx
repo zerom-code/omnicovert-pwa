@@ -24,24 +24,18 @@ export function App() {
         onOpenHistory={() => setIsHistoryModalOpen(true)}
       />
 
-      {/* Main Content Area (Native App Shell) */}
-      <main
-        className="main-scroll-area"
-        style={{
-          maxWidth: '900px',
-          width: '100%',
-          margin: '0 auto',
-          padding: '20px 16px',
-        }}
-      >
-        {currentTab === 'whisper' && (
-          <WhisperStudio onOpenApiKey={() => setIsApiKeyModalOpen(true)} />
-        )}
-        {currentTab === 'gif' && <GifStudio />}
-        {currentTab === 'pdf' && <PdfSuite />}
-        {currentTab === 'images' && <ImageConverter />}
-        {currentTab === 'media' && <AudioVideoConverter />}
-        {currentTab === 'data' && <DataConverter />}
+      {/* Main Content Area (Scrollable Flex Item) */}
+      <main className="app-content-scroll">
+        <div style={{ maxWidth: '900px', margin: '0 auto', width: '100%' }}>
+          {currentTab === 'whisper' && (
+            <WhisperStudio onOpenApiKey={() => setIsApiKeyModalOpen(true)} />
+          )}
+          {currentTab === 'gif' && <GifStudio />}
+          {currentTab === 'pdf' && <PdfSuite />}
+          {currentTab === 'images' && <ImageConverter />}
+          {currentTab === 'media' && <AudioVideoConverter />}
+          {currentTab === 'data' && <DataConverter />}
+        </div>
       </main>
 
       {/* Mobile-First Navigation Bar */}

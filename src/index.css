@@ -47,18 +47,15 @@ html, body {
   font-family: var(--font-body);
   font-size: 15px;
   line-height: 1.5;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
   margin: 0;
   padding: 0;
+  width: 100%;
+  height: 100%;
+  height: -webkit-fill-available;
+  height: 100dvh;
   overflow: hidden;
-  overscroll-behavior: none;
   user-select: none;
+  -webkit-touch-callout: none;
 }
 
 /* Background Ambient Glows */
@@ -90,26 +87,22 @@ body::after {
 #root {
   display: flex;
   flex-direction: column;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
   width: 100%;
   height: 100%;
-  z-index: 1;
+  height: -webkit-fill-available;
+  height: 100dvh;
   overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 
-.main-scroll-area {
-  flex: 1;
+.app-content-scroll {
+  flex: 1 1 0%;
+  min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
-  padding-top: 14px;
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 56px);
-  padding-left: 14px;
-  padding-right: 14px;
+  padding: 16px 16px 30px 16px;
 }
 
 h1, h2, h3, h4, .font-heading {
