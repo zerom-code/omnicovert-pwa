@@ -31,17 +31,17 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
         bottom: 0,
         left: 0,
         right: 0,
-        background: 'rgba(8, 10, 16, 0.95)',
+        background: 'rgba(8, 10, 16, 0.96)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         borderTop: '1px solid var(--border-subtle)',
         display: 'flex',
         justifyContent: 'space-around',
         alignItems: 'center',
-        paddingTop: '6px',
-        paddingLeft: '4px',
-        paddingRight: '4px',
-        paddingBottom: 'max(4px, env(safe-area-inset-bottom, 4px))',
+        paddingTop: '4px',
+        paddingLeft: '2px',
+        paddingRight: '2px',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         zIndex: 50,
       }}
     >
@@ -55,26 +55,26 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '2px',
+              gap: '1px',
               background: 'transparent',
               border: 'none',
               color: isActive ? 'var(--primary-light)' : 'var(--text-muted)',
               cursor: 'pointer',
-              padding: '4px 6px',
-              borderRadius: '10px',
+              padding: '2px 4px',
+              borderRadius: '8px',
               transition: 'all 0.15s ease',
               position: 'relative',
               flex: 1,
-              maxWidth: '75px',
+              maxWidth: '70px',
             }}
           >
             {isActive && (
               <div
                 style={{
                   position: 'absolute',
-                  top: '-6px',
-                  width: '16px',
-                  height: '2.5px',
+                  top: '-4px',
+                  width: '14px',
+                  height: '2px',
                   borderRadius: '9999px',
                   background: 'var(--primary-gradient)',
                   boxShadow: '0 0 8px rgba(99, 102, 241, 0.8)',
@@ -83,7 +83,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
             )}
             <div
               style={{
-                transform: isActive ? 'scale(1.08)' : 'scale(1)',
+                transform: isActive ? 'scale(1.05)' : 'scale(1)',
                 transition: 'transform 0.15s ease',
               }}
             >
