@@ -9,6 +9,79 @@ export interface GifOptions {
 }
 
 /**
+ * Creates an animated GIF from a single photo with optional motion effects (Zoom, Pulse, Pan, Static)
+ */
+export async function createAnimatedGifFromSingleImage(
+  file: File,
+  effect: 'static' | 'zoom' | 'pulse' | 'pan' = 'zoom',
+  durationSeconds: number = 2,
+  fps: number = 10,
+  onProgress?: (progress: number) => void
+): Promise<Blob> {
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = reject;
+    img.src = url;
+  });
+
+  const width = Math.min(600, img.naturalWidth || 480);
+  const height = Math.min(600, img.naturalHeight || 480);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+
+  const gif = GIFEncoder();
+  const totalFrames = effect === 'static' ? 1 : Math.max(2, Math.floor(durationSeconds * fps));
+  const delay = effect === 'static' ? 100 : Math.round(1000 / fps);
+
+  for (let i = 0; i < totalFrames; i++) {
+    ctx.clearRect(0, 0, width, height);
+
+    let scale = 1.0;
+    let shiftX = 0;
+    const progress = i / totalFrames;
+
+    if (effect === 'zoom') {
+      scale = 1.0 + progress * 0.15; // 1.0 to 1.15 zoom in
+    } else if (effect === 'pulse') {
+      scale = 1.0 + Math.sin(progress * Math.PI * 2) * 0.08;
+    } else if (effect === 'pan') {
+      shiftX = Math.sin(progress * Math.PI * 2) * 15;
+    }
+
+    const drawW = width * scale;
+    const drawH = height * scale;
+    const posX = (width - drawW) / 2 + shiftX;
+    const posY = (height - drawH) / 2;
+
+    ctx.drawImage(img, posX, posY, drawW, drawH);
+
+    const { data } = ctx.getImageData(0, 0, width, height);
+    const palette = quantize(data, 256);
+    const index = applyPalette(data, palette);
+
+    gif.writeFrame(index, width, height, {
+      palette,
+      delay,
+      repeat: 0,
+    });
+
+    if (onProgress) {
+      onProgress(Math.round(((i + 1) / totalFrames) * 100));
+    }
+  }
+
+  gif.finish();
+  URL.revokeObjectURL(url);
+  return new Blob([new Uint8Array(gif.bytes())], { type: 'image/gif' });
+}
+
+/**
  * Encodes a series of images (Photos) into an animated GIF
  */
 export async function createGifFromImages(
@@ -16,6 +89,10 @@ export async function createGifFromImages(
   options: GifOptions,
   onProgress?: (progress: number) => void
 ): Promise<Blob> {
+  if (files.length === 1) {
+    return createAnimatedGifFromSingleImage(files[0], 'zoom', 2, options.fps, onProgress);
+  }
+
   const { fps = 10, loop = true, width, height } = options;
   const delay = Math.round(1000 / fps);
 

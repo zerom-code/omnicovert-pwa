@@ -24,10 +24,10 @@ export function App() {
         onOpenHistory={() => setIsHistoryModalOpen(true)}
       />
 
-      {/* Main Content Area */}
+      {/* Main Content Area (Native App Shell) */}
       <main
+        className="main-scroll-area"
         style={{
-          flex: 1,
           maxWidth: '900px',
           width: '100%',
           margin: '0 auto',

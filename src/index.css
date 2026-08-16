@@ -47,9 +47,13 @@ html, body {
   font-family: var(--font-body);
   font-size: 15px;
   line-height: 1.5;
-  min-height: 100vh;
-  min-height: -webkit-fill-available;
-  overflow-x: hidden;
+  height: 100dvh;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  position: fixed;
+  inset: 0;
   user-select: none;
 }
 
@@ -82,11 +86,20 @@ body::after {
 #root {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100dvh;
+  height: 100vh;
+  width: 100%;
   position: relative;
   z-index: 1;
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
+  overflow: hidden;
+}
+
+.main-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  padding-bottom: 90px;
 }
 
 h1, h2, h3, h4, .font-heading {

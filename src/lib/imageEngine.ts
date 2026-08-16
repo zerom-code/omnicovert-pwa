@@ -1,7 +1,7 @@
 import JSZip from 'jszip';
 
 export interface ImageConvertOptions {
-  format: 'png' | 'jpeg' | 'webp' | 'avif';
+  format: 'png' | 'jpeg' | 'webp' | 'avif' | 'gif';
   quality: number; // 0.1 to 1.0
   maxWidth?: number;
   maxHeight?: number;

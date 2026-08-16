@@ -12,6 +12,28 @@ export interface TranscriptionResponse {
   segments?: WhisperSegment[];
 }
 
+const WHISPER_HALLUCINATIONS = [
+  /субтитры (сделал|создал|добавил|подготовил|перевел|оформил).*/gi,
+  /dimatorzok/gi,
+  /редактор субтитров.*/gi,
+  /перевод(чик)?:?.*/gi,
+  /amara\.org/gi,
+  /подписывайтесь на канал.*/gi,
+  /ставим лайки.*/gi,
+  /продолжение следует.*/gi,
+  /спасибо за просмотр.*/gi,
+  /thank you for watching.*/gi,
+  /subtitles by.*/gi,
+];
+
+function sanitizeWhisperText(text: string): string {
+  let cleaned = text;
+  for (const pattern of WHISPER_HALLUCINATIONS) {
+    cleaned = cleaned.replace(pattern, '').trim();
+  }
+  return cleaned;
+}
+
 /**
  * Calls OpenAI Whisper API with verbose_json to extract timestamps and text
  */
@@ -31,9 +53,11 @@ export async function transcribeAudioWithWhisper(
     formData.append('language', language);
   }
 
-  if (prompt) {
-    formData.append('prompt', prompt);
-  }
+  // Anti-hallucination system prompt for Whisper
+  const antiHallucinationPrompt = prompt
+    ? prompt
+    : 'Транскрипция аудиозаписи без посторонних титров, авторов субтитров и стороннего текста.';
+  formData.append('prompt', antiHallucinationPrompt);
 
   const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
     method: 'POST',
@@ -49,7 +73,22 @@ export async function transcribeAudioWithWhisper(
     throw new Error(msg);
   }
 
-  return response.json();
+  const json = await response.json();
+
+  // Sanitize text and segments from known hallucinations
+  const cleanText = sanitizeWhisperText(json.text || '');
+  const cleanSegments = (json.segments || [])
+    .map((s: WhisperSegment) => ({
+      ...s,
+      text: sanitizeWhisperText(s.text),
+    }))
+    .filter((s: WhisperSegment) => s.text.trim().length > 0);
+
+  return {
+    ...json,
+    text: cleanText || '⚠️ Речь в аудиозаписи не обнаружена (тишина, шум или музыка).',
+    segments: cleanSegments,
+  };
 }
 
 /**

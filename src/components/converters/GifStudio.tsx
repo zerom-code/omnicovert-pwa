@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Film, Images, Video, Download, RefreshCw, Sparkles, Play, Trash2 } from 'lucide-react';
 import { DropZone } from '../ui/DropZone';
-import { createGifFromImages, createGifFromVideo } from '../../lib/gifEngine';
+import { createGifFromImages, createGifFromVideo, createAnimatedGifFromSingleImage } from '../../lib/gifEngine';
 import { addHistoryItem, triggerHaptic } from '../../lib/storage';
 import confetti from 'canvas-confetti';
 
@@ -10,7 +10,8 @@ export const GifStudio: React.FC = () => {
 
   // Images to GIF State
   const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [imageFps, setImageFps] = useState(6);
+  const [singleImageEffect, setSingleImageEffect] = useState<'zoom' | 'pulse' | 'pan' | 'static'>('zoom');
+  const [imageFps, setImageFps] = useState(10);
   const [imageLoop, setImageLoop] = useState(true);
   const [imageProgress, setImageProgress] = useState(0);
   const [imageGifUrl, setImageGifUrl] = useState<string | null>(null);
@@ -41,17 +42,29 @@ export const GifStudio: React.FC = () => {
     triggerHaptic('medium');
 
     try {
-      const blob = await createGifFromImages(
-        imageFiles,
-        { fps: imageFps, loop: imageLoop },
-        (p) => setImageProgress(p)
-      );
+      let blob: Blob;
+      if (imageFiles.length === 1) {
+        blob = await createAnimatedGifFromSingleImage(
+          imageFiles[0],
+          singleImageEffect,
+          2.5,
+          imageFps,
+          (p: number) => setImageProgress(p)
+        );
+      } else {
+        blob = await createGifFromImages(
+          imageFiles,
+          { fps: imageFps, loop: imageLoop },
+          (p: number) => setImageProgress(p)
+        );
+      }
+
       const url = URL.createObjectURL(blob);
       setImageGifUrl(url);
       addHistoryItem({
         type: 'gif',
-        title: 'Фото в GIF',
-        subtitle: `${imageFiles.length} кадров • ${(blob.size / 1024).toFixed(1)} КБ`,
+        title: imageFiles.length === 1 ? '1 Фото в GIF' : 'Серия Фото в GIF',
+        subtitle: `${imageFiles.length} фото • ${(blob.size / 1024).toFixed(1)} КБ`,
       });
       triggerHaptic('success');
       confetti({ particleCount: 50, spread: 50, origin: { y: 0.8 } });
@@ -246,19 +259,33 @@ export const GifStudio: React.FC = () => {
 
               {/* Controls */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
-                <div>
-                  <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '6px' }}>
-                    <span>Скорость (FPS):</span>
-                    <strong>{imageFps} кадр/сек</strong>
-                  </label>
-                  <input
-                    type="range"
-                    min="1"
-                    max="24"
-                    value={imageFps}
-                    onChange={(e) => setImageFps(Number(e.target.value))}
-                  />
-                </div>
+                {imageFiles.length === 1 ? (
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+                      Эффект анимации для 1 фото:
+                    </label>
+                    <select value={singleImageEffect} onChange={(e) => setSingleImageEffect(e.target.value as any)}>
+                      <option value="zoom">🔍 Живой Zoom (Плавное приближение)</option>
+                      <option value="pulse">💓 Пульсация (Эффект дыхания)</option>
+                      <option value="pan">↔️ Панорама (Сдвиг влево-вправо)</option>
+                      <option value="static">🖼️ Статичный GIF (1 кадр)</option>
+                    </select>
+                  </div>
+                ) : (
+                  <div>
+                    <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '6px' }}>
+                      <span>Скорость (FPS):</span>
+                      <strong>{imageFps} кадр/сек</strong>
+                    </label>
+                    <input
+                      type="range"
+                      min="1"
+                      max="24"
+                      value={imageFps}
+                      onChange={(e) => setImageFps(Number(e.target.value))}
+                    />
+                  </div>
+                )}
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingTop: '18px' }}>
                   <input
@@ -288,7 +315,11 @@ export const GifStudio: React.FC = () => {
                 ) : (
                   <>
                     <Sparkles size={18} />
-                    <span>Сгенерировать GIF из {imageFiles.length} фото</span>
+                    <span>
+                      {imageFiles.length === 1
+                        ? 'Сгенерировать GIF из 1 фото'
+                        : `Сгенерировать GIF из ${imageFiles.length} фото`}
+                    </span>
                   </>
                 )}
               </button>

@@ -115,6 +115,7 @@ export const ImageConverter: React.FC = () => {
                 <option value="jpeg">JPG / JPEG (Классический)</option>
                 <option value="png">PNG (Без потерь, прозрачность)</option>
                 <option value="avif">AVIF (Ультра-сжатие)</option>
+                <option value="gif">GIF (Формат GIF)</option>
               </select>
             </div>
 
