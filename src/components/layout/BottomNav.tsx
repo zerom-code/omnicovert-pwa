@@ -38,10 +38,10 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
         display: 'flex',
         justifyContent: 'space-around',
         alignItems: 'center',
-        paddingTop: '8px',
-        paddingLeft: '8px',
-        paddingRight: '8px',
-        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)',
+        paddingTop: '6px',
+        paddingLeft: '4px',
+        paddingRight: '4px',
+        paddingBottom: 'max(4px, env(safe-area-inset-bottom, 4px))',
         zIndex: 50,
       }}
     >
@@ -55,43 +55,43 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '4px',
+              gap: '2px',
               background: 'transparent',
               border: 'none',
               color: isActive ? 'var(--primary-light)' : 'var(--text-muted)',
               cursor: 'pointer',
-              padding: '6px 10px',
-              borderRadius: '12px',
-              transition: 'all 0.2s ease',
+              padding: '4px 6px',
+              borderRadius: '10px',
+              transition: 'all 0.15s ease',
               position: 'relative',
               flex: 1,
-              maxWidth: '85px',
+              maxWidth: '75px',
             }}
           >
             {isActive && (
               <div
                 style={{
                   position: 'absolute',
-                  top: '-8px',
-                  width: '20px',
-                  height: '3px',
+                  top: '-6px',
+                  width: '16px',
+                  height: '2.5px',
                   borderRadius: '9999px',
                   background: 'var(--primary-gradient)',
-                  boxShadow: '0 0 10px rgba(99, 102, 241, 0.8)',
+                  boxShadow: '0 0 8px rgba(99, 102, 241, 0.8)',
                 }}
               />
             )}
             <div
               style={{
-                transform: isActive ? 'scale(1.1)' : 'scale(1)',
-                transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                transform: isActive ? 'scale(1.08)' : 'scale(1)',
+                transition: 'transform 0.15s ease',
               }}
             >
               {tab.icon}
             </div>
             <span
               style={{
-                fontSize: '11px',
+                fontSize: '10px',
                 fontWeight: isActive ? 700 : 500,
                 fontFamily: 'var(--font-heading)',
               }}
