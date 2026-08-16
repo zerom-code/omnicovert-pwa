@@ -39,13 +39,17 @@ export const Header: React.FC<HeaderProps> = ({ onOpenApiKey, onOpenHistory }) =
   return (
     <header
       style={{
-        padding: '16px 20px',
+        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 14px)',
+        paddingBottom: '14px',
+        paddingLeft: '16px',
+        paddingRight: '16px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         borderBottom: '1px solid var(--border-subtle)',
-        background: 'rgba(8, 10, 16, 0.85)',
-        backdropFilter: 'blur(12px)',
+        background: 'rgba(8, 10, 16, 0.95)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
         position: 'sticky',
         top: 0,
         zIndex: 50,
