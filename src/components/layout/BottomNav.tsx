@@ -25,61 +25,19 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
   };
 
   return (
-    <nav
-      style={{
-        flexShrink: 0,
-        width: '100%',
-        background: 'rgba(9, 11, 18, 0.98)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderTop: '1px solid var(--border-subtle)',
-        display: 'flex',
-        justifyContent: 'space-around',
-        alignItems: 'center',
-        paddingTop: '8px',
-        paddingLeft: '4px',
-        paddingRight: '4px',
-        paddingBottom: 'calc(env(safe-area-inset-bottom, 16px) + 8px)',
-        zIndex: 50,
-      }}
-    >
+    <nav className="bottom-nav-container">
       {tabs.map((tab) => {
         const isActive = currentTab === tab.id;
         return (
           <button
             key={tab.id}
             onClick={() => handleTabClick(tab.id)}
+            className="bottom-nav-btn"
             style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '3px',
-              background: 'transparent',
-              border: 'none',
               color: isActive ? 'var(--primary-light)' : 'var(--text-muted)',
-              cursor: 'pointer',
-              padding: '2px 4px',
-              borderRadius: '8px',
-              transition: 'all 0.15s ease',
-              position: 'relative',
-              flex: 1,
-              maxWidth: '70px',
             }}
           >
-            {isActive && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '-8px',
-                  width: '16px',
-                  height: '2.5px',
-                  borderRadius: '9999px',
-                  background: 'var(--primary-gradient)',
-                  boxShadow: '0 0 8px rgba(99, 102, 241, 0.8)',
-                }}
-              />
-            )}
+            {isActive && <div className="bottom-nav-indicator" />}
             <div
               style={{
                 transform: isActive ? 'scale(1.08)' : 'scale(1)',
@@ -89,12 +47,10 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
               {tab.icon}
             </div>
             <span
+              className="bottom-nav-label"
               style={{
-                fontSize: '11px',
                 fontWeight: isActive ? 700 : 500,
-                fontFamily: 'var(--font-heading)',
-                lineHeight: 1.1,
-                whiteSpace: 'nowrap',
+                color: isActive ? '#ffffff' : 'var(--text-muted)',
               }}
             >
               {tab.label}
