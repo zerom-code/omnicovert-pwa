@@ -12,17 +12,16 @@ export async function extractAudioFromVideo(
   if (onProgress) onProgress('Декодирование аудиопотока...');
   const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
   
-  let audioBuffer: AudioBuffer;
   try {
-    audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    if (onProgress) onProgress('Кодирование в формат WAV...');
+    const wavBlob = audioBufferToWav(audioBuffer);
+    return wavBlob;
   } catch {
     throw new Error('Не удалось декодировать аудиодорожку из этого видеофайла. Возможно, файл поврежден или аудиокодек не поддерживается браузером.');
+  } finally {
+    audioContext.close().catch(() => {});
   }
-
-  if (onProgress) onProgress('Кодирование в формат WAV...');
-  const wavBlob = audioBufferToWav(audioBuffer);
-
-  return wavBlob;
 }
 
 /**

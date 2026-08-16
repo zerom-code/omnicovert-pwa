@@ -5,6 +5,60 @@ import { createGifFromImages, createGifFromVideo, createAnimatedGifFromSingleIma
 import { addHistoryItem, triggerHaptic } from '../../lib/storage';
 import confetti from 'canvas-confetti';
 
+const ImageThumbnail: React.FC<{ file: File; onRemove: () => void; index: number }> = ({ file, onRemove, index }) => {
+  const [url, setUrl] = useState<string>('');
+  React.useEffect(() => {
+    const objectUrl = URL.createObjectURL(file);
+    setUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [file]);
+
+  return (
+    <div
+      style={{
+        position: 'relative',
+        borderRadius: '8px',
+        overflow: 'hidden',
+        aspectRatio: '1',
+        border: '1px solid var(--border-subtle)',
+      }}
+    >
+      {url && <img src={url} alt="frame" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+      <button
+        onClick={onRemove}
+        style={{
+          position: 'absolute',
+          top: '2px',
+          right: '2px',
+          background: 'rgba(0,0,0,0.7)',
+          border: 'none',
+          color: '#fff',
+          borderRadius: '50%',
+          width: '18px',
+          height: '18px',
+          fontSize: '10px',
+          cursor: 'pointer',
+        }}
+      >
+        ✕
+      </button>
+      <span
+        style={{
+          position: 'absolute',
+          bottom: '2px',
+          left: '4px',
+          fontSize: '10px',
+          fontWeight: 700,
+          color: '#fff',
+          textShadow: '0 1px 2px #000',
+        }}
+      >
+        #{index + 1}
+      </span>
+    </div>
+  );
+};
+
 export const GifStudio: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'images' | 'video'>('images');
 
@@ -207,53 +261,12 @@ export const GifStudio: React.FC = () => {
                 }}
               >
                 {imageFiles.map((file, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      position: 'relative',
-                      borderRadius: '8px',
-                      overflow: 'hidden',
-                      aspectRatio: '1',
-                      border: '1px solid var(--border-subtle)',
-                    }}
-                  >
-                    <img
-                      src={URL.createObjectURL(file)}
-                      alt="frame"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                    <button
-                      onClick={() => removeImage(idx)}
-                      style={{
-                        position: 'absolute',
-                        top: '2px',
-                        right: '2px',
-                        background: 'rgba(0,0,0,0.7)',
-                        border: 'none',
-                        color: '#fff',
-                        borderRadius: '50%',
-                        width: '18px',
-                        height: '18px',
-                        fontSize: '10px',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      ✕
-                    </button>
-                    <span
-                      style={{
-                        position: 'absolute',
-                        bottom: '2px',
-                        left: '4px',
-                        fontSize: '10px',
-                        fontWeight: 700,
-                        color: '#fff',
-                        textShadow: '0 1px 2px #000',
-                      }}
-                    >
-                      #{idx + 1}
-                    </span>
-                  </div>
+                  <ImageThumbnail
+                    key={`${file.name}-${idx}`}
+                    file={file}
+                    index={idx}
+                    onRemove={() => removeImage(idx)}
+                  />
                 ))}
               </div>
 

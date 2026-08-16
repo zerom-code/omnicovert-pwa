@@ -24,25 +24,23 @@ export async function imagesToPdf(
     }
 
     const file = imageFiles[i];
-    const base64Data = await readFileAsBase64(file);
-    const imgProps = doc.getImageProperties(base64Data);
+    const { dataUrl, width, height, format } = await readFileAsCompatibleImageData(file);
 
     const margin = 20;
     const availWidth = pageWidth - margin * 2;
     const availHeight = pageHeight - margin * 2;
 
-    const widthRatio = availWidth / imgProps.width;
-    const heightRatio = availHeight / imgProps.height;
+    const widthRatio = availWidth / width;
+    const heightRatio = availHeight / height;
     const ratio = Math.min(widthRatio, heightRatio, 1);
 
-    const targetWidth = imgProps.width * ratio;
-    const targetHeight = imgProps.height * ratio;
+    const targetWidth = width * ratio;
+    const targetHeight = height * ratio;
 
     const posX = (pageWidth - targetWidth) / 2;
     const posY = (pageHeight - targetHeight) / 2;
 
-    const format = file.type.includes('png') ? 'PNG' : 'JPEG';
-    doc.addImage(base64Data, format, posX, posY, targetWidth, targetHeight, undefined, 'FAST');
+    doc.addImage(dataUrl, format, posX, posY, targetWidth, targetHeight, undefined, 'FAST');
 
     if (onProgress) {
       onProgress(Math.round(((i + 1) / imageFiles.length) * 100));
@@ -159,11 +157,34 @@ function parsePageRanges(rangeStr: string, maxPages: number): number[] {
   return Array.from(indices).sort((a, b) => a - b);
 }
 
-function readFileAsBase64(file: File): Promise<string> {
+function readFileAsCompatibleImageData(
+  file: File
+): Promise<{ dataUrl: string; width: number; height: number; format: 'JPEG' | 'PNG' }> {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth || 800;
+      canvas.height = img.naturalHeight || 600;
+      const ctx = canvas.getContext('2d')!;
+
+      const isPng = file.type.includes('png');
+      if (!isPng) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      const format = isPng ? 'PNG' : 'JPEG';
+      const dataUrl = canvas.toDataURL(isPng ? 'image/png' : 'image/jpeg', 0.92);
+      resolve({ dataUrl, width: canvas.width, height: canvas.height, format });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error(`Не удалось загрузить изображение ${file.name}`));
+    };
+    img.src = objectUrl;
   });
 }

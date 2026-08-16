@@ -52,11 +52,23 @@ export async function generateQrCode(text: string, size: number = 300): Promise<
 }
 
 export function base64Encode(text: string): string {
-  return btoa(unescape(encodeURIComponent(text)));
+  try {
+    const bytes = new TextEncoder().encode(text);
+    const binString = Array.from(bytes, (byte) => String.fromCharCode(byte)).join('');
+    return btoa(binString);
+  } catch (e: unknown) {
+    throw new Error('Ошибка кодирования в Base64: ' + (e instanceof Error ? e.message : String(e)));
+  }
 }
 
 export function base64Decode(encoded: string): string {
-  return decodeURIComponent(escape(atob(encoded)));
+  try {
+    const binString = atob(encoded.trim());
+    const bytes = Uint8Array.from(binString, (m) => m.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
+  } catch (e: unknown) {
+    throw new Error('Ошибка декодирования Base64: неверный формат строки');
+  }
 }
 
 export function urlEncode(text: string): string {

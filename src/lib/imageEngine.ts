@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import { GIFEncoder, quantize, applyPalette } from 'gifenc';
 
 export interface ImageConvertOptions {
   format: 'png' | 'jpeg' | 'webp' | 'avif' | 'gif';
@@ -56,7 +57,27 @@ export async function convertSingleImage(
         ctx.fillRect(0, 0, width, height);
       }
 
-      ctx.drawImage(img, 0, 0, width, height);
+      if (format === 'gif') {
+        const { data } = ctx.getImageData(0, 0, width, height);
+        const palette = quantize(data, 256);
+        const index = applyPalette(data, palette);
+        const gif = GIFEncoder();
+        gif.writeFrame(index, width, height, { palette, delay: 100, repeat: 0 });
+        gif.finish();
+        const blob = new Blob([new Uint8Array(gif.bytes())], { type: 'image/gif' });
+        const baseName = file.name.replace(/\.[^/.]+$/, '');
+        const fileName = `${baseName}_converted.gif`;
+        const previewUrl = URL.createObjectURL(blob);
+
+        resolve({
+          fileName,
+          blob,
+          previewUrl,
+          originalSize: file.size,
+          newSize: blob.size,
+        });
+        return;
+      }
 
       const mimeType = `image/${format}`;
       canvas.toBlob(
