@@ -29,17 +29,17 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
       style={{
         flexShrink: 0,
         width: '100%',
-        background: 'rgba(8, 10, 16, 0.98)',
+        background: 'rgba(9, 11, 18, 0.98)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         borderTop: '1px solid var(--border-subtle)',
         display: 'flex',
         justifyContent: 'space-around',
         alignItems: 'center',
-        paddingTop: '6px',
+        paddingTop: '8px',
         paddingLeft: '4px',
         paddingRight: '4px',
-        paddingBottom: 'max(4px, env(safe-area-inset-bottom, 4px))',
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 16px) + 8px)',
         zIndex: 50,
       }}
     >
@@ -53,7 +53,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '2px',
+              justifyContent: 'center',
+              gap: '3px',
               background: 'transparent',
               border: 'none',
               color: isActive ? 'var(--primary-light)' : 'var(--text-muted)',
@@ -70,9 +71,9 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
               <div
                 style={{
                   position: 'absolute',
-                  top: '-6px',
+                  top: '-8px',
                   width: '16px',
-                  height: '2px',
+                  height: '2.5px',
                   borderRadius: '9999px',
                   background: 'var(--primary-gradient)',
                   boxShadow: '0 0 8px rgba(99, 102, 241, 0.8)',
@@ -81,7 +82,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
             )}
             <div
               style={{
-                transform: isActive ? 'scale(1.05)' : 'scale(1)',
+                transform: isActive ? 'scale(1.08)' : 'scale(1)',
                 transition: 'transform 0.15s ease',
               }}
             >
@@ -89,9 +90,11 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab })
             </div>
             <span
               style={{
-                fontSize: '10px',
+                fontSize: '11px',
                 fontWeight: isActive ? 700 : 500,
                 fontFamily: 'var(--font-heading)',
+                lineHeight: 1.1,
+                whiteSpace: 'nowrap',
               }}
             >
               {tab.label}
