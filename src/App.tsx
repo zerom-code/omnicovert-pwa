@@ -7,6 +7,7 @@ import { PdfSuite } from './components/converters/PdfSuite';
 import { ImageConverter } from './components/converters/ImageConverter';
 import { AudioVideoConverter } from './components/converters/AudioVideoConverter';
 import { DataConverter } from './components/converters/DataConverter';
+import { SmartCompressor } from './components/converters/SmartCompressor';
 import { ApiKeyModal } from './components/ui/ApiKeyModal';
 import { HistoryModal } from './components/ui/HistoryModal';
 
@@ -30,6 +31,7 @@ export function App() {
           {currentTab === 'whisper' && (
             <WhisperStudio onOpenApiKey={() => setIsApiKeyModalOpen(true)} />
           )}
+          {currentTab === 'compress' && <SmartCompressor />}
           {currentTab === 'gif' && <GifStudio />}
           {currentTab === 'pdf' && <PdfSuite />}
           {currentTab === 'images' && <ImageConverter />}

@@ -1,8 +1,8 @@
 import React from 'react';
-import { Mic, Film, FileText, Image as ImageIcon, Music, Database } from 'lucide-react';
+import { Mic, Film, FileText, Image as ImageIcon, Music, Database, Zap } from 'lucide-react';
 import { triggerHaptic } from '../../lib/storage';
 
-export type TabType = 'whisper' | 'gif' | 'pdf' | 'images' | 'media' | 'data';
+export type TabType = 'whisper' | 'compress' | 'gif' | 'pdf' | 'images' | 'media' | 'data';
 
 interface BottomNavProps {
   currentTab: TabType;
@@ -12,6 +12,7 @@ interface BottomNavProps {
 export const BottomNav: React.FC<BottomNavProps> = ({ currentTab, onSelectTab }) => {
   const tabs = [
     { id: 'whisper' as TabType, label: 'AI Whisper', icon: <Mic size={18} /> },
+    { id: 'compress' as TabType, label: 'Сжатие', icon: <Zap size={18} /> },
     { id: 'gif' as TabType, label: 'GIF Студия', icon: <Film size={18} /> },
     { id: 'pdf' as TabType, label: 'PDF Suite', icon: <FileText size={18} /> },
     { id: 'images' as TabType, label: 'Фото', icon: <ImageIcon size={18} /> },

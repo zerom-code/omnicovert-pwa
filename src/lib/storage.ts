@@ -1,6 +1,6 @@
 export interface HistoryItem {
   id: string;
-  type: 'gif' | 'pdf' | 'image' | 'audio' | 'data' | 'whisper';
+  type: 'gif' | 'pdf' | 'image' | 'audio' | 'data' | 'whisper' | 'compress';
   title: string;
   subtitle: string;
   timestamp: number;
