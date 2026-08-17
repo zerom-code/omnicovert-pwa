@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="primaryGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="50%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#ec4899" />
+    </linearGradient>
+    <linearGradient id="secondaryGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#3b82f6" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <!-- Background with rounded corners for iOS style -->
+  <rect width="512" height="512" rx="128" fill="url(#bg)" stroke="rgba(255,255,255,0.1)" stroke-width="8" />
+  
+  <!-- Glow effect background -->
+  <circle cx="256" cy="256" r="140" fill="url(#primaryGlow)" opacity="0.25" filter="url(#glow)" />
+  
+  <!-- Outer rotating loop arrows -->
+  <path d="M140 256 C140 185 190 130 260 130 C320 130 365 170 378 225" fill="none" stroke="url(#primaryGlow)" stroke-width="28" stroke-linecap="round" />
+  <polygon points="380,185 410,235 350,240" fill="#ec4899" />
+  
+  <path d="M372 256 C372 327 322 382 252 382 C192 382 147 342 134 287" fill="none" stroke="url(#secondaryGlow)" stroke-width="28" stroke-linecap="round" />
+  <polygon points="132,327 102,277 162,272" fill="#06b6d4" />
+  
+  <!-- Central Sparkle / AI Bolt -->
+  <path d="M256 190 L268 240 L318 256 L268 272 L256 322 L244 272 L194 256 L244 240 Z" fill="#ffffff" filter="url(#glow)" />
+</svg>
