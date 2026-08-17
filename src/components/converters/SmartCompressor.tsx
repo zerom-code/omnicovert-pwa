@@ -439,38 +439,51 @@ export const SmartCompressor: React.FC = () => {
           {results.length > 0 && (
             <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {/* Total Savings Summary Header */}
-              <div
-                style={{
-                  padding: '16px',
-                  borderRadius: '12px',
-                  background: 'linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(6,182,212,0.15) 100%)',
-                  border: '1px solid rgba(16,185,129,0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ padding: '8px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.2)', color: '#34d399' }}>
-                    <TrendingDown size={22} />
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>Общая экономия размера:</span>
-                    <div style={{ fontSize: '18px', fontWeight: 800, color: '#34d399' }}>
-                      -{Math.round(((results.reduce((acc, r) => acc + r.originalSize, 0) - results.reduce((acc, r) => acc + r.compressedSize, 0)) / results.reduce((acc, r) => acc + r.originalSize, 0)) * 100)}% ({formatBytes(results.reduce((acc, r) => acc + r.savedBytes, 0))} сэкономлено)
-                    </div>
-                  </div>
-                </div>
+              {(() => {
+                const totalOriginal = results.reduce((acc, r) => acc + r.originalSize, 0);
+                const totalCompressed = results.reduce((acc, r) => acc + r.compressedSize, 0);
+                const totalSavedBytes = Math.max(0, totalOriginal - totalCompressed);
+                const totalPercent = totalOriginal > totalCompressed
+                  ? Math.round((totalSavedBytes / totalOriginal) * 100)
+                  : 0;
 
-                <button
-                  className="btn-primary"
-                  onClick={handleDownloadAllZip}
-                  style={{ padding: '8px 16px', fontSize: '13px', background: 'var(--emerald-gradient)' }}
-                >
-                  <Download size={15} />
-                  <span>Скачать {results.length > 1 ? 'ZIP' : 'файл'}</span>
-                </button>
-              </div>
+                return (
+                  <div
+                    style={{
+                      padding: '16px',
+                      borderRadius: '12px',
+                      background: 'linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(6,182,212,0.15) 100%)',
+                      border: '1px solid rgba(16,185,129,0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: '12px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ padding: '8px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.2)', color: '#34d399' }}>
+                        <TrendingDown size={22} />
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '12px', color: '#94a3b8' }}>Результат умного сжатия:</span>
+                        <div style={{ fontSize: '18px', fontWeight: 800, color: '#34d399' }}>
+                          -{totalPercent}% ({formatBytes(totalSavedBytes)} сэкономлено)
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      className="btn-primary"
+                      onClick={handleDownloadAllZip}
+                      style={{ padding: '8px 16px', fontSize: '13px', background: 'var(--emerald-gradient)' }}
+                    >
+                      <Download size={15} />
+                      <span>Скачать {results.length > 1 ? 'ZIP' : 'файл'}</span>
+                    </button>
+                  </div>
+                );
+              })()}
 
               {/* Items List */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -492,12 +505,13 @@ export const SmartCompressor: React.FC = () => {
                         <strong style={{ fontSize: '13px', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {res.fileName}
                         </strong>
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                           <span style={{ textDecoration: 'line-through' }}>{formatBytes(res.originalSize)}</span>
-                          {' ➔ '}
+                          <span>➔</span>
                           <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{formatBytes(res.compressedSize)}</span>
-                          {' '}
                           <span style={{ color: '#34d399', fontWeight: 700 }}>(-{res.savingsPercent}%)</span>
+                          {res.dimensions && <span className="badge" style={{ fontSize: '10px', padding: '1px 6px' }}>{res.dimensions}</span>}
+                          <span className="badge badge-pwa" style={{ fontSize: '10px', padding: '1px 6px' }}>{res.format}</span>
                         </div>
                       </div>
                     </div>
@@ -506,7 +520,7 @@ export const SmartCompressor: React.FC = () => {
                       href={res.previewUrl}
                       download={res.fileName}
                       className="btn-secondary"
-                      style={{ padding: '6px 12px', fontSize: '12px', textDecoration: 'none' }}
+                      style={{ padding: '6px 12px', fontSize: '12px', textDecoration: 'none', flexShrink: 0 }}
                     >
                       <Download size={14} />
                       <span>Скачать</span>

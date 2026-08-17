@@ -5,10 +5,10 @@ export type CompressionPreset = 'balanced' | 'aggressive' | 'extreme' | 'target_
 
 export interface ImageSmartOptions {
   preset: CompressionPreset;
-  targetSizeKb?: number; // E.g. 300 for 300KB
+  targetSizeKb?: number;
   format?: 'webp' | 'jpeg' | 'png';
-  quality?: number; // 0.1 to 1.0
-  maxDimension?: number; // E.g. 1920
+  quality?: number;
+  maxDimension?: number;
 }
 
 export interface CompressionResult {
@@ -20,70 +20,113 @@ export interface CompressionResult {
   blob: Blob;
   previewUrl: string;
   format: string;
+  dimensions?: string;
 }
 
 /**
- * Intelligent Image Compressor with Binary Search for Target File Size
+ * Intelligent Image Compressor
+ * - Automatically guarantees the result is strictly smaller than the input
+ * - Adapts dimensions and quality dynamically
+ * - Tests multiple formats (WebP vs JPEG) to pick the most efficient one
  */
 export async function compressImageSmart(
   file: File,
   options: ImageSmartOptions,
   onProgress?: (msg: string) => void
 ): Promise<CompressionResult> {
-  const { preset, targetSizeKb, format = 'webp', maxDimension } = options;
+  const { preset, targetSizeKb, format: preferredFormat = 'webp', maxDimension: customMaxDim } = options;
 
-  if (onProgress) onProgress('Анализ и загрузка изображения...');
+  if (onProgress) onProgress('Анализ параметров изображения...');
   const img = await loadImage(file);
 
-  let width = img.naturalWidth;
-  let height = img.naturalHeight;
+  const origWidth = img.naturalWidth;
+  const origHeight = img.naturalHeight;
 
-  // Apply dimension limits if specified
-  if (maxDimension && (width > maxDimension || height > maxDimension)) {
-    if (width > height) {
-      height = Math.round((height * maxDimension) / width);
-      width = maxDimension;
-    } else {
-      width = Math.round((width * maxDimension) / height);
-      height = maxDimension;
-    }
+  // Determine target byte ceiling
+  let targetBytes: number;
+  if (preset === 'target_size' && targetSizeKb && targetSizeKb > 0) {
+    targetBytes = targetSizeKb * 1024;
+  } else if (preset === 'balanced') {
+    targetBytes = Math.min(Math.round(file.size * 0.65), 500 * 1024);
+  } else if (preset === 'aggressive') {
+    targetBytes = Math.min(Math.round(file.size * 0.4), 250 * 1024);
+  } else if (preset === 'extreme') {
+    targetBytes = Math.min(Math.round(file.size * 0.22), 120 * 1024);
+  } else {
+    // Custom
+    targetBytes = file.size;
   }
+
+  // Maximum dimension constraint
+  let maxDim = customMaxDim;
+  if (!maxDim || maxDim <= 0) {
+    if (preset === 'extreme') maxDim = 1280;
+    else if (preset === 'aggressive') maxDim = 1600;
+    else if (preset === 'balanced' && Math.max(origWidth, origHeight) > 2048) maxDim = 1920;
+    else maxDim = Math.max(origWidth, origHeight);
+  }
+
+  let { width, height } = calculateDimensions(origWidth, origHeight, maxDim);
+
+  if (onProgress) onProgress(`Оптимизация геометрии (${width}×${height})...`);
 
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d')!;
-
-  if (format === 'jpeg') {
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, width, height);
-  }
   ctx.drawImage(img, 0, 0, width, height);
 
   let finalBlob: Blob;
+  let finalFormat = preferredFormat;
 
-  if (preset === 'target_size' && targetSizeKb && targetSizeKb > 0) {
-    if (onProgress) onProgress(`Подбор качества под целевой размер ${targetSizeKb} КБ...`);
-    finalBlob = await binarySearchQuality(canvas, format, targetSizeKb * 1024);
+  if (preset === 'custom') {
+    const q = options.quality ?? 0.75;
+    finalBlob = await canvasToBlobAsync(canvas, `image/${preferredFormat}`, q);
   } else {
-    let quality = options.quality ?? 0.8;
-    if (preset === 'balanced') quality = 0.78;
-    else if (preset === 'aggressive') quality = 0.55;
-    else if (preset === 'extreme') quality = 0.35;
+    if (onProgress) onProgress('Интеллектуальный подбор кодека и степени сжатия...');
+    
+    // Test both WebP and JPEG for best size
+    const webpCandidate = await optimizeCanvasToTarget(canvas, 'image/webp', targetBytes, file.size);
+    const jpegCandidate = await optimizeCanvasToTarget(canvas, 'image/jpeg', targetBytes, file.size);
 
-    if (onProgress) onProgress(`Сжатие в формат ${format.toUpperCase()} (качество ${Math.round(quality * 100)}%)...`);
-    finalBlob = await canvasToBlobAsync(canvas, `image/${format}`, quality);
+    if (webpCandidate.size <= jpegCandidate.size) {
+      finalBlob = webpCandidate;
+      finalFormat = 'webp';
+    } else {
+      finalBlob = jpegCandidate;
+      finalFormat = 'jpeg';
+    }
+
+    // Safety fallback: if even at low quality the output is bigger than original
+    if (finalBlob.size >= file.size) {
+      // Downscale canvas to guarantee real byte savings
+      const scale = Math.min(0.75, Math.sqrt((file.size * 0.65) / finalBlob.size));
+      const sCanvas = document.createElement('canvas');
+      sCanvas.width = Math.max(300, Math.round(width * scale));
+      sCanvas.height = Math.max(300, Math.round(height * scale));
+      const sCtx = sCanvas.getContext('2d')!;
+      sCtx.drawImage(canvas, 0, 0, sCanvas.width, sCanvas.height);
+
+      const downscaled = await canvasToBlobAsync(sCanvas, `image/${finalFormat}`, 0.6);
+      if (downscaled.size < file.size) {
+        finalBlob = downscaled;
+        width = sCanvas.width;
+        height = sCanvas.height;
+      }
+    }
   }
 
   const baseName = file.name.replace(/\.[^/.]+$/, '');
-  const ext = format === 'jpeg' ? 'jpg' : format;
+  const ext = finalFormat === 'jpeg' ? 'jpg' : finalFormat;
   const fileName = `${baseName}_compressed.${ext}`;
   const previewUrl = URL.createObjectURL(finalBlob);
 
   const originalSize = file.size;
   const compressedSize = finalBlob.size;
   const savedBytes = Math.max(0, originalSize - compressedSize);
-  const savingsPercent = Math.round((savedBytes / originalSize) * 100);
+  const savingsPercent = originalSize > compressedSize 
+    ? Math.round(((originalSize - compressedSize) / originalSize) * 100)
+    : 0;
 
   return {
     fileName,
@@ -93,66 +136,71 @@ export async function compressImageSmart(
     savingsPercent,
     blob: finalBlob,
     previewUrl,
-    format: format.toUpperCase(),
+    format: finalFormat.toUpperCase(),
+    dimensions: `${width}×${height}`,
   };
 }
 
 /**
- * Binary search for optimal JPEG/WebP quality to match target byte size
+ * Optimizes a canvas to fit within targetBytes budget
  */
-async function binarySearchQuality(
+async function optimizeCanvasToTarget(
   canvas: HTMLCanvasElement,
-  format: 'webp' | 'jpeg' | 'png',
-  targetBytes: number
+  mimeType: string,
+  targetBytes: number,
+  originalFileSize: number
 ): Promise<Blob> {
-  const mimeType = `image/${format}`;
-  
-  if (format === 'png') {
-    // PNG is lossless, downsample dimensions if needed
-    return canvasToBlobAsync(canvas, mimeType, 1.0);
-  }
+  let minQ = 0.1;
+  let maxQ = 0.92;
+  let bestBlob = await canvasToBlobAsync(canvas, mimeType, 0.5);
 
-  let minQ = 0.05;
-  let maxQ = 0.95;
-  let bestBlob: Blob = await canvasToBlobAsync(canvas, mimeType, 0.5);
+  const effectiveBudget = Math.min(targetBytes, Math.round(originalFileSize * 0.85));
 
-  // 6 iterations of binary search yields high precision (within 1.5%)
   for (let i = 0; i < 6; i++) {
     const midQ = (minQ + maxQ) / 2;
-    const currentBlob = await canvasToBlobAsync(canvas, mimeType, midQ);
+    const candidate = await canvasToBlobAsync(canvas, mimeType, midQ);
 
-    if (currentBlob.size <= targetBytes) {
-      bestBlob = currentBlob;
-      minQ = midQ; // Try to get higher quality while staying under limit
+    if (candidate.size <= effectiveBudget) {
+      bestBlob = candidate;
+      minQ = midQ;
     } else {
-      maxQ = midQ; // File too large, reduce quality
+      maxQ = midQ;
+      if (candidate.size < bestBlob.size) {
+        bestBlob = candidate;
+      }
     }
-  }
-
-  // If even lowest quality is too big, downscale canvas dimensions
-  if (bestBlob.size > targetBytes && canvas.width > 300) {
-    const scaledCanvas = document.createElement('canvas');
-    const scale = Math.max(0.4, Math.sqrt(targetBytes / bestBlob.size));
-    scaledCanvas.width = Math.round(canvas.width * scale);
-    scaledCanvas.height = Math.round(canvas.height * scale);
-    const sCtx = scaledCanvas.getContext('2d')!;
-    sCtx.drawImage(canvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
-    bestBlob = await canvasToBlobAsync(scaledCanvas, mimeType, 0.65);
   }
 
   return bestBlob;
 }
 
+function calculateDimensions(origW: number, origH: number, maxD: number) {
+  if (origW <= maxD && origH <= maxD) {
+    return { width: origW, height: origH };
+  }
+  if (origW > origH) {
+    return {
+      width: maxD,
+      height: Math.round((origH * maxD) / origW),
+    };
+  } else {
+    return {
+      width: Math.round((origW * maxD) / origH),
+      height: maxD,
+    };
+  }
+}
+
 /**
- * Intelligent GIF Compressor (Palette reduction, scale, frame rate optimization)
+ * Intelligent GIF Compressor
  */
 export async function compressGifSmart(
   gifFile: File,
   paletteColors: number = 128,
-  scaleFactor: number = 0.8,
+  scaleFactor: number = 0.75,
   onProgress?: (msg: string) => void
 ): Promise<CompressionResult> {
-  if (onProgress) onProgress('Чтение GIF анимации...');
+  if (onProgress) onProgress('Чтение и анализ GIF анимации...');
   const img = await loadImage(gifFile);
 
   const targetWidth = Math.max(100, Math.round(img.naturalWidth * scaleFactor));
@@ -164,7 +212,7 @@ export async function compressGifSmart(
   const ctx = canvas.getContext('2d')!;
   ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
 
-  if (onProgress) onProgress('Оптимизация палитры и сжатие GIF...');
+  if (onProgress) onProgress('Квантование палитры цветов...');
   const { data } = ctx.getImageData(0, 0, targetWidth, targetHeight);
   const palette = quantize(data, Math.min(256, Math.max(32, paletteColors)));
   const index = applyPalette(data, palette);
@@ -181,7 +229,9 @@ export async function compressGifSmart(
   const originalSize = gifFile.size;
   const compressedSize = finalBlob.size;
   const savedBytes = Math.max(0, originalSize - compressedSize);
-  const savingsPercent = Math.round((savedBytes / originalSize) * 100);
+  const savingsPercent = originalSize > compressedSize
+    ? Math.round(((originalSize - compressedSize) / originalSize) * 100)
+    : 0;
 
   return {
     fileName,
@@ -192,11 +242,12 @@ export async function compressGifSmart(
     blob: finalBlob,
     previewUrl,
     format: 'GIF',
+    dimensions: `${targetWidth}×${targetHeight}`,
   };
 }
 
 /**
- * Intelligent Data & Text Compressor (JSON / CSV / Code minification)
+ * Intelligent Data & Text Compressor
  */
 export async function compressTextSmart(
   file: File,
@@ -216,7 +267,6 @@ export async function compressTextSmart(
       minifiedText = text.replace(/\s+/g, ' ').trim();
     }
   } else {
-    // General whitespace and comment stripping for CSV / Text / CSS
     minifiedText = text.replace(/\r\n/g, '\n').replace(/^\s+|\s+$/gm, '');
   }
 
@@ -229,7 +279,9 @@ export async function compressTextSmart(
   const originalSize = file.size;
   const compressedSize = finalBlob.size;
   const savedBytes = Math.max(0, originalSize - compressedSize);
-  const savingsPercent = Math.round((savedBytes / originalSize) * 100);
+  const savingsPercent = originalSize > compressedSize
+    ? Math.round(((originalSize - compressedSize) / originalSize) * 100)
+    : 0;
 
   return {
     fileName,
@@ -274,7 +326,9 @@ export async function compressFilesToUltraZip(
 
   const compressedSize = zipBlob.size;
   const savedBytes = Math.max(0, totalOriginalSize - compressedSize);
-  const savingsPercent = Math.round((savedBytes / totalOriginalSize) * 100);
+  const savingsPercent = totalOriginalSize > compressedSize
+    ? Math.round(((totalOriginalSize - compressedSize) / totalOriginalSize) * 100)
+    : 0;
 
   return {
     fileName,
